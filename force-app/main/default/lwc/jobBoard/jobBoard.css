@@ -1,0 +1,43 @@
+.job-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.job-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.job-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.job-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.job-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.error {
+    color: #b91c1c;
+    margin-bottom: 12px;
+}
+
+.muted {
+    color: #6b7280;
+    margin-bottom: 12px;
+}

@@ -1,0 +1,221 @@
+<template>
+    <lightning-card title="Apply for a Job" icon-name="standard:job_profile">
+        <div class="slds-p-around_medium">
+            <template if:true={isSubmitting}>
+                <div class="slds-align_absolute-center slds-m-bottom_medium">
+                    <lightning-spinner alternative-text="Submitting" size="small">
+                    </lightning-spinner>
+                </div>
+            </template>
+
+            <template if:true={loadError}>
+                <p class="error">{loadError}</p>
+            </template>
+
+            <template if:true={isSubmitted}>
+                <div class="success">
+                    <p>Thanks for applying! We have received your application.</p>
+                </div>
+                <div class="actions">
+                    <lightning-button label="Submit another application"
+                                      onclick={handleReset}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <template if:false={isSubmitted}>
+                <div class="stepper">
+                    <div class={step1Class}>
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Candidate</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class={step2Class}>
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Application</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class={step3Class}>
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Review</div>
+                    </div>
+                </div>
+
+                <div class="step-meta">Step {currentStep} of 3</div>
+
+                <template if:true={isStep1}>
+                    <div class="section-title">Candidate Information</div>
+                    <div class="field-grid">
+                        <lightning-input
+                            label="First Name"
+                            type="text"
+                            value={firstName}
+                            data-field="firstName"
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Last Name"
+                            type="text"
+                            value={lastName}
+                            data-field="lastName"
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Email"
+                            type="email"
+                            value={email}
+                            data-field="email"
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Phone"
+                            type="tel"
+                            value={phone}
+                            data-field="phone"
+                            onchange={handleChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="LinkedIn Profile"
+                            type="url"
+                            value={linkedInProfile}
+                            data-field="linkedInProfile"
+                            onchange={handleChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Current Employer"
+                            type="text"
+                            value={currentEmployer}
+                            data-field="currentEmployer"
+                            onchange={handleChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Current Job Title"
+                            type="text"
+                            value={currentJobTitle}
+                            data-field="currentJobTitle"
+                            onchange={handleChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <template if:true={isStep2}>
+                    <div class="section-title">Application Details</div>
+
+                    <template if:true={hasJobs}>
+                        <lightning-combobox
+                            label="Job Opening"
+                            placeholder="Select a job"
+                            value={jobOpeningId}
+                            options={jobOptions}
+                            data-field="jobOpeningId"
+                            onchange={handleChange}
+                            required>
+                        </lightning-combobox>
+                    </template>
+                    <template if:false={hasJobs}>
+                        <p class="muted">No open positions are available right now.</p>
+                    </template>
+
+                    <lightning-combobox
+                        label="Where did you hear about this position?"
+                        placeholder="Select source"
+                        value={source}
+                        options={sourceOptions}
+                        data-field="source"
+                        onchange={handleChange}>
+                    </lightning-combobox>
+
+                    <div class="field-grid">
+                        <lightning-input
+                            label="Years of Experience"
+                            type="number"
+                            value={yearsOfExperience}
+                            data-field="yearsOfExperience"
+                            onchange={handleChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Expected Salary"
+                            type="number"
+                            value={expectedSalary}
+                            data-field="expectedSalary"
+                            onchange={handleChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Notice Period (Days)"
+                            type="number"
+                            value={noticePeriodDays}
+                            data-field="noticePeriodDays"
+                            onchange={handleChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <template if:true={isStep3}>
+                    <div class="section-title">Additional Details</div>
+                    <div class="review-card">
+                        <div class="review-item">
+                            <span class="review-label">Candidate</span>
+                            <span>{firstName} {lastName}</span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Email</span>
+                            <span>{email}</span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Job Opening</span>
+                            <span>{selectedJobLabel}</span>
+                        </div>
+                        <div class="review-item">
+                            <span class="review-label">Expected Salary</span>
+                            <span>{expectedSalary}</span>
+                        </div>
+                    </div>
+
+                    <lightning-textarea
+                        label="Cover Letter"
+                        value={coverLetter}
+                        data-field="coverLetter"
+                        onchange={handleChange}>
+                    </lightning-textarea>
+                </template>
+
+                <div class="actions step-actions">
+                    <lightning-button
+                        label="Back"
+                        onclick={handleBack}
+                        disabled={isBackDisabled}>
+                    </lightning-button>
+
+                    <template if:true={isStep3}>
+                        <lightning-button
+                            variant="brand"
+                            label="Submit Application"
+                            onclick={handleSubmit}
+                            disabled={isSubmitDisabled}>
+                        </lightning-button>
+                    </template>
+                    <template if:false={isStep3}>
+                        <lightning-button
+                            variant="brand"
+                            label="Next"
+                            onclick={handleNext}
+                            disabled={isNextDisabled}>
+                        </lightning-button>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

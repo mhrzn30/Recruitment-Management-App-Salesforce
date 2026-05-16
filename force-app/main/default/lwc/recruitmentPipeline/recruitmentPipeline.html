@@ -1,0 +1,304 @@
+<template>
+    <lightning-card title="Recruitment Pipeline" 
+                    icon-name="standard:kanban">
+
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="slds-p-medium">
+                <p style="color:red">{error}</p>
+            </div>
+        </template>
+
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="slds-p-medium slds-align_absolute-center">
+                <lightning-spinner 
+                    alternative-text="Loading" 
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Kanban Board -->
+        <template if:false={isLoading}>
+            <div class="board slds-p-around_small">
+                <template for:each={stages} for:item="stage">
+                    <div key={stage.name} class="column">
+
+                        <!-- Column Header -->
+                            <div class={stage.headerClass}>
+                            <span class="column-title">
+                                {stage.label}
+                            </span>
+                            <span class="column-count">
+                                {stage.count}
+                            </span>
+                        </div>
+
+                        <!-- Cards -->
+                        <div class="cards-container">
+                            <template for:each={stage.applications} 
+                                      for:item="app">
+                                  <div key={app.Id}
+                                      class="card"
+                                      data-id={app.Id}
+                                      onclick={handleCardClick}>
+
+                                    <!-- Candidate Name -->
+                                    <div class="card-name">
+                                        {app.candidateName}
+                                    </div>
+
+                                    <!-- Job Title -->
+                                    <div class="card-role">
+                                        {app.jobTitle}
+                                    </div>
+
+                                    <!-- Company -->
+                                    <div class="card-company">
+                                        {app.accountName}
+                                    </div>
+
+                                    <!-- Interview Round -->
+                                    <template if:true={app.showInterviewRound}>
+                                        <div class="card-round">
+                                            Round: {app.interviewRoundLabel}
+                                        </div>
+                                    </template>
+
+                                    <!-- Footer -->
+                                    <div class="card-footer">
+                                        <!-- Days Badge -->
+                                                                                <span class={app.badgeClass}>
+                                            {app.Days_in_Current_Stage__c}d
+                                        </span>
+
+                                        <!-- Actions -->
+                                        <div class="card-actions">
+                                            <template if:true={app.showScheduleInterview}>
+                                                <lightning-button
+                                                    label="Schedule Interview"
+                                                    variant="neutral"
+                                                    class="action-button"
+                                                    data-id={app.Id}
+                                                    onclick={handleScheduleInterview}>
+                                                </lightning-button>
+                                            </template>
+                                            <template if:true={app.showStartInterview}>
+                                                <lightning-button
+                                                    label="Start Interview"
+                                                    variant="neutral"
+                                                    class="action-button"
+                                                    data-id={app.Id}
+                                                    onclick={handleStartInterview}>
+                                                </lightning-button>
+                                            </template>
+                                            <template if:true={app.showCompleteInterview}>
+                                                <lightning-button
+                                                    label="Complete Interview"
+                                                    variant="neutral"
+                                                    class="action-button"
+                                                    data-id={app.Id}
+                                                    onclick={handleCompleteInterview}>
+                                                </lightning-button>
+                                            </template>
+                                            <template if:true={app.canMoveBack}>
+                                                <lightning-button-icon
+                                                    icon-name="utility:chevronleft"
+                                                    variant="bare"
+                                                    size="x-small"
+                                                    alternative-text="Move Back"
+                                                    data-id={app.Id}
+                                                    data-direction="back"
+                                                    onclick={handleMove}>
+                                                </lightning-button-icon>
+                                            </template>
+                                            <template if:true={app.canMoveForward}>
+                                                <lightning-button-icon
+                                                    icon-name="utility:chevronright"
+                                                    variant="bare"
+                                                    size="x-small"
+                                                    alternative-text="Move Forward"
+                                                    data-id={app.Id}
+                                                    data-direction="forward"
+                                                    onclick={handleMove}>
+                                                </lightning-button-icon>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </template>
+
+                            <!-- Empty Column -->
+                            <template if:true={stage.isEmpty}>
+                                <div class="empty-column">
+                                    No applications
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Summary Bar -->
+        <div class="summary slds-p-around_small">
+            <span>Total Active: <strong>{totalActive}</strong></span>
+            <span>Offers Pending: <strong>{offersPending}</strong></span>
+            <span>Hired: <strong>{totalHired}</strong></span>
+        </div>
+
+        <!-- Schedule Interview Modal -->
+        <template if:true={showScheduleModal}>
+            <section role="dialog" tabindex="-1"
+                     aria-modal="true"
+                     class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">
+                            Schedule Interview
+                        </h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-record-edit-form
+                            object-api-name="Interview__c"
+                            data-form="schedule"
+                            onsubmit={handleScheduleSubmit}
+                            onsuccess={handleScheduleSuccess}>
+                            <lightning-messages></lightning-messages>
+
+                            <div class="slds-grid slds-wrap slds-gutters">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Interview_Type__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field
+                                        field-name="Interview_Round__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field
+                                        field-name="Mode__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field
+                                        field-name="Interview_DateTime__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field
+                                        field-name="Interviewer__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Meeting_Link__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Venue__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+
+                            <div class="slds-modal__footer slds-grid slds-grid_align-end">
+                                <lightning-button
+                                    label="Cancel"
+                                    variant="neutral"
+                                    onclick={closeScheduleModal}>
+                                </lightning-button>
+                                <lightning-button
+                                    label="Save"
+                                    variant="brand"
+                                    type="submit"
+                                    class="slds-m-left_small">
+                                </lightning-button>
+                            </div>
+                        </lightning-record-edit-form>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- Complete Interview Modal -->
+        <template if:true={showCompleteModal}>
+            <section role="dialog" tabindex="-1"
+                     aria-modal="true"
+                     class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">
+                            Complete Interview
+                        </h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-record-edit-form
+                            record-id={activeInterviewId}
+                            object-api-name="Interview__c"
+                            data-form="complete"
+                            onsubmit={handleCompleteSubmit}
+                            onsuccess={handleCompleteSuccess}>
+                            <lightning-messages></lightning-messages>
+
+                            <div class="slds-grid slds-wrap slds-gutters">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Needs_Another_Round__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Recommendation__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-input-field
+                                        field-name="Technical_Rating__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-input-field
+                                        field-name="Communication_Rating__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-input-field
+                                        field-name="Cultural_Fit_Rating__c">
+                                    </lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input-field
+                                        field-name="Feedback__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+
+                            <div class="slds-modal__footer slds-grid slds-grid_align-end">
+                                <lightning-button
+                                    label="Cancel"
+                                    variant="neutral"
+                                    onclick={closeCompleteModal}>
+                                </lightning-button>
+                                <lightning-button
+                                    label="Submit"
+                                    variant="brand"
+                                    type="submit"
+                                    class="slds-m-left_small">
+                                </lightning-button>
+                            </div>
+                        </lightning-record-edit-form>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </lightning-card>
+</template>

@@ -1,0 +1,39 @@
+<template>
+    <lightning-card title="Open Positions" icon-name="standard:job_profile">
+        <div class="slds-p-around_medium">
+            <template if:true={loadError}>
+                <p class="error">{loadError}</p>
+            </template>
+
+            <template if:true={hasJobs}>
+                <div class="job-grid">
+                    <template for:each={jobs} for:item="job">
+                        <article key={job.Id} class="job-card">
+                            <div class="job-title">{job.title}</div>
+                            <div class="job-meta">
+                                <template if:true={job.department}>
+                                    <span>Department: {job.department}</span>
+                                </template>
+                                <template if:true={job.location}>
+                                    <span>Location: {job.location}</span>
+                                </template>
+                            </div>
+                            <div class="job-actions">
+                                <lightning-button
+                                    variant="brand"
+                                    label="Apply"
+                                    data-id={job.Id}
+                                    onclick={handleApply}>
+                                </lightning-button>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasJobs}>
+                <p class="muted">No open positions are available right now.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

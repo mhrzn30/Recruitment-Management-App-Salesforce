@@ -1,0 +1,194 @@
+/* Board */
+.board {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    min-height: 500px;
+    padding-bottom: 8px;
+}
+
+/* Column */
+.column {
+    min-width: 190px;
+    max-width: 190px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: white;
+}
+
+.header-new {
+    border-top: 4px solid #6B7280;
+}
+
+.header-screening {
+    border-top: 4px solid #3B82F6;
+}
+
+.header-shortlisted {
+    border-top: 4px solid #8B5CF6;
+}
+
+.header-interview-scheduled {
+    border-top: 4px solid #F59E0B;
+}
+
+.header-interview-in-progress {
+    border-top: 4px solid #F97316;
+}
+
+.header-offer-pending {
+    border-top: 4px solid #EF4444;
+}
+
+.header-offer-extended {
+    border-top: 4px solid #10B981;
+}
+
+.header-hired {
+    border-top: 4px solid #059669;
+}
+
+.column-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #374151;
+}
+
+.column-count {
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Cards Container */
+.cards-container {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 80px;
+}
+
+/* Card */
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 3px;
+}
+
+.card-role {
+    font-size: 12px;
+    color: #3b82f6;
+    font-weight: 500;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-company {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-round {
+    font-size: 11px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.days-badge {
+    display: inline-block;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.badge-green {
+    background: #10B981;
+}
+
+.badge-amber {
+    background: #F59E0B;
+}
+
+.badge-red {
+    background: #EF4444;
+}
+
+.card-actions {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.action-button {
+    --slds-c-button-font-size: 10px;
+    --slds-c-button-line-height: 1.2;
+    --slds-c-button-spacing-inline-start: 6px;
+    --slds-c-button-spacing-inline-end: 6px;
+}
+
+/* Empty Column */
+.empty-column {
+    text-align: center;
+    padding: 20px 8px;
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+/* Summary Bar */
+.summary {
+    display: flex;
+    gap: 24px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.summary strong {
+    color: #111827;
+}
