@@ -5,6 +5,8 @@ private class OfferExpiryBatchTest {
     static void setup() {
         Account acc = new Account(
             Name = 'Test Corp',
+            Phone = '1234567890',
+            Website = 'https://example.com',
             Account_Status__c = 'Active',
             Primary_Industry_Sector__c = 'Information Technology'
         );
@@ -17,14 +19,7 @@ private class OfferExpiryBatchTest {
             Contact_Type__c = 'Candidate',
             Candidate_Status__c = 'Active — Looking'
         );
-        Contact hiringManager = new Contact(
-            FirstName = 'Hiring',
-            LastName = 'Manager',
-            Email = 'manager@test.com',
-            Contact_Type__c = 'Candidate',
-            Candidate_Status__c = 'Active — Looking'
-        );
-        insert new List<Contact>{ candidate, hiringManager };
+        insert candidate;
 
         Job_Opening__c opening = new Job_Opening__c(
             Job_Title__c = 'Test Engineer',
@@ -32,8 +27,7 @@ private class OfferExpiryBatchTest {
             Status__c = 'Open',
             Employment_Type__c = 'Full-Time',
             Department__c = 'Engineering',
-            Openings_Count__c = 1,
-            Hiring_Manager__c = hiringManager.Id
+            Openings_Count__c = 1
         );
         insert opening;
 
@@ -49,6 +43,7 @@ private class OfferExpiryBatchTest {
         Offer__c expiredOffer = new Offer__c(
             Job_Application__c = app.Id,
             Offer_Status__c = 'Sent to Candidate',
+            Offer_Letter_Sent__c = true,
             Offered_Salary__c = 100000,
             Offer_Date__c = Date.today().addDays(-10),
             Offer_Expiry_Date__c = Date.today().addDays(-1),
@@ -60,6 +55,7 @@ private class OfferExpiryBatchTest {
         Offer__c reminderOffer = new Offer__c(
             Job_Application__c = app.Id,
             Offer_Status__c = 'Sent to Candidate',
+            Offer_Letter_Sent__c = true,
             Offered_Salary__c = 95000,
             Offer_Date__c = Date.today().addDays(-2),
             Offer_Expiry_Date__c = Date.today().addDays(1),
@@ -70,6 +66,7 @@ private class OfferExpiryBatchTest {
         Offer__c futureOffer = new Offer__c(
             Job_Application__c = app.Id,
             Offer_Status__c = 'Sent to Candidate',
+            Offer_Letter_Sent__c = true,
             Offered_Salary__c = 90000,
             Offer_Date__c = Date.today().addDays(-1),
             Offer_Expiry_Date__c = Date.today().addDays(10),

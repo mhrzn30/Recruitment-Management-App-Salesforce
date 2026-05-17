@@ -1,0 +1,328 @@
+Excellent! You've created the Hiring_Manager__c field on Job_Application__c. Perfect! 
+
+Now let's break down the implementation **stage by stage** so we can build and test incrementally.
+
+---
+
+## 🎯 **Stage-by-Stage Implementation Plan**
+
+I'll organize this so we can complete, test, and verify each stage before moving to the next.
+
+---
+
+## **STAGE 1: Foundation** 
+### Create TaskCreationUtility (Reusable Helper Class)
+
+**Purpose**: Centralized, bulk-safe task creation to avoid code duplication
+
+**What we'll build**:
+```
+Files:
+├── TaskCreationUtility.cls
+├── TaskCreationUtility.cls-meta.xml
+└── TaskCreationUtilityTest.cls
+```
+
+**Key Method**:
+```apex
+public static void createTasks(List<TaskWrapper> taskWrappers) {
+    // Bulk-safe task creation
+    // Handles null checks
+    // Single insert for all tasks
+}
+```
+
+**Testing**: Verify we can create tasks in bulk without hitting governor limits
+
+---
+
+## **STAGE 2: Job Opening Automation**
+### When Job Opening is created → Notify Recruiter
+
+**What we'll build**:
+```
+Files:
+├── JobOpeningTrigger.trigger
+├── JobOpeningTrigger.trigger-meta.xml
+├── JobOpeningHandler.cls
+├── JobOpeningHandler.cls-meta.xml
+└── JobOpeningHandlerTest.cls
+```
+
+**Trigger Logic**:
+```apex
+After Insert:
+  → Call JobOpeningHandler.notifyRecruiterOnNewJobOpening()
+  → Create Task for Owner:
+     "New Job Opening Created - {Job_Title__c}"
+     Due: Today + 1 day
+```
+
+**Testing Scenario**:
+1. Create Job_Opening__c record
+2. Verify Task is created for Owner
+3. Verify Task subject includes Job_Title__c
+4. Verify Due date is tomorrow
+
+---
+
+## **STAGE 3: Job Application - New Application**
+### When Candidate Applies → Screening Task for Recruiter
+
+**What we'll build**:
+```
+Files:
+├── JobApplicationTrigger.trigger (extend existing)
+├── JobApplicationHandler.cls
+├── JobApplicationHandler.cls-meta.xml
+└── JobApplicationHandlerTest.cls
+```
+
+**Trigger Logic**:
+```apex
+After Insert:
+  → Keep existing email functionality
+  → Call JobApplicationHandler.createScreeningTask()
+  → Create Task for assigned Recruiter:
+     "Screen application - {Contact.Name} for {Job_Title__c}"
+     Due: Today + 2 days
+     Priority: High
+```
+
+**Testing Scenario**:
+1. Create Job_Application__c record
+2. Verify screening task created for recruiter
+3. Verify email still sent (existing functionality)
+4. Verify task links to application record
+
+---
+
+## **STAGE 4: Job Application - Shortlisted**
+### When Application is Shortlisted → Assign Hiring Manager Task
+
+**What we'll build**:
+```
+Add to JobApplicationHandler.cls:
+├── handleStageChanges() method
+└── createHiringManagerAssignmentTask() method
+```
+
+**Trigger Logic**:
+```apex
+After Update:
+  IF Application_Stage__c changed to "Shortlisted":
+    → Create Task for Recruiter:
+       "Assign Hiring Manager for {Contact.Name}"
+       Due: Today + 1 day
+       Description: "Review candidate and assign appropriate Hiring Manager"
+```
+
+**Testing Scenario**:
+1. Update Application_Stage__c to "Shortlisted"
+2. Verify assignment task created for recruiter
+3. Verify task not created if stage unchanged
+
+---
+
+## **STAGE 5: Job Application - Hiring Manager Assigned**
+### When Hiring Manager is Assigned → Review Task for HM
+
+**What we'll build**:
+```
+Add to JobApplicationHandler.cls:
+├── handleHiringManagerAssignment() method
+```
+
+**Trigger Logic**:
+```apex
+After Update:
+  IF Hiring_Manager__c changed (populated):
+    → Create Task for Hiring_Manager__c:
+       "Review shortlisted candidate - {Contact.Name}"
+       Due: Today + 3 days
+       Description: "Recruiter has assigned this candidate to you"
+```
+
+**Testing Scenario**:
+1. Update Hiring_Manager__c field (assign a user)
+2. Verify review task created for Hiring Manager
+3. Verify no task if Hiring Manager cleared (set to null)
+
+---
+
+## **STAGE 6: Job Application - Other Stage Changes**
+### Handle Interview, Offer, Hired, Rejected stages
+
+**What we'll build**:
+```
+Add to JobApplicationHandler.cls:
+├── Methods for each stage transition
+```
+
+**Trigger Logic**:
+```apex
+After Update - Application_Stage__c changes:
+
+  "Interview" → Task for Recruiter:
+    "Schedule interview for {Candidate}"
+    Due: Today + 2 days
+
+  "Offer" → Task for Recruiter:
+    "Prepare offer letter for {Candidate}"
+    Due: Today + 2 days
+
+  "Hired" → Task for Hiring Manager:
+    "Complete onboarding for {Candidate}"
+    Due: Today + 5 days
+
+  "Rejected" → Task for Recruiter:
+    "Send rejection email to {Candidate}"
+    Due: Today + 1 day
+```
+
+**Testing Scenario**: Test each stage transition individually
+
+---
+
+## **STAGE 7: Interview - Scheduled**
+### When Interview is Created → Tasks & Event
+
+**What we'll build**:
+```
+Files:
+├── InterviewTrigger.trigger (extend existing)
+├── InterviewHandler.cls
+├── InterviewHandler.cls-meta.xml
+└── InterviewHandlerTest.cls
+```
+
+**Trigger Logic**:
+```apex
+After Insert:
+  → Create Task for Hiring Manager:
+     "Prepare for interview - {Candidate.Name}"
+     Due: Interview_DateTime__c - 1 day
+
+  → Create Task for Recruiter:
+     "Send interview confirmation to {Candidate}"
+     Due: Today
+
+  → Create Event for Hiring Manager:
+     Subject: "Interview - {Candidate} for {Job}"
+     Start: Interview_DateTime__c
+     Duration: Duration_Minutes__c (default 60)
+```
+
+**Testing Scenario**:
+1. Create Interview__c record
+2. Verify 2 tasks + 1 event created
+3. Verify event links to correct datetime
+
+---
+
+## **STAGE 8: Interview - Completed**
+### When Interview Completed → Feedback Task
+
+**What we'll build**:
+```
+Add to InterviewHandler.cls:
+├── handleInterviewCompletion() method
+```
+
+**Trigger Logic**:
+```apex
+After Update:
+  IF Status__c changed to "Completed" AND Feedback_Submitted__c = false:
+    → Create Task for Hiring Manager:
+       "Submit interview feedback for {Candidate}"
+       Due: Today + 1 day
+       Priority: High
+```
+
+**Testing Scenario**:
+1. Update Interview Status to "Completed"
+2. Verify feedback task created
+3. Verify task not created if feedback already submitted
+
+---
+
+## **STAGE 9: Offer - Created**
+### When Offer is Extended → Offer Tasks
+
+**What we'll build**:
+```
+Files:
+├── OfferTrigger.trigger
+├── OfferTrigger.trigger-meta.xml
+├── OfferHandler.cls
+├── OfferHandler.cls-meta.xml
+└── OfferHandlerTest.cls
+```
+
+**Trigger Logic**:
+```apex
+After Insert:
+  → Create Tasks for Recruiter:
+     1. "Prepare offer letter for {Candidate}"
+     2. "Send offer to {Candidate}"
+     3. "Track offer response"
+     Due: Today + 2 days
+```
+
+**Testing Scenario**:
+1. Create Offer__c record
+2. Verify 3 tasks created for recruiter
+3. Verify all tasks link to offer record
+
+---
+
+## **STAGE 10: Offer - Accepted**
+### When Offer Accepted → Onboarding Task
+
+**What we'll build**:
+```
+Add to OfferHandler.cls:
+├── handleOfferStatusChanges() method
+```
+
+**Trigger Logic**:
+```apex
+After Update:
+  IF Status__c changed to "Accepted":
+    → Create Task for Hiring Manager:
+       "Start onboarding for {Candidate}"
+       Due: Start_Date__c - 7 days
+       Priority: High
+```
+
+**Testing Scenario**:
+1. Update Offer Status to "Accepted"
+2. Verify onboarding task created
+3. Verify due date calculated correctly
+
+---
+
+## 📋 **Implementation Order Summary**
+
+```
+Stage 1: Foundation (TaskCreationUtility) ← START HERE
+Stage 2: Job Opening automation
+Stage 3: Application - New application
+Stage 4: Application - Shortlisted
+Stage 5: Application - HM Assigned
+Stage 6: Application - Other stages
+Stage 7: Interview - Scheduled
+Stage 8: Interview - Completed
+Stage 9: Offer - Created
+Stage 10: Offer - Accepted
+```
+
+---
+
+## ✅ **Ready to Start?**
+
+**Please toggle to Act mode** and we'll begin with **Stage 1: Foundation**.
+
+I'll create the TaskCreationUtility class first, then we'll move through each stage one by one. After each stage, you can test it in your org before we proceed to the next stage.
+
+**Sound good?** Let's build this step by step! 🚀

@@ -30,11 +30,7 @@ public with sharing class CloseExpiredOffersBatch
                    Job_Application__r.Candidate__r.FirstName,
                    Job_Application__r.Candidate__r.LastName,
                    Job_Application__r.Candidate__r.Email,
-                   Job_Application__r.Job_Opening__r.Job_Title__c,
-                   Job_Application__r.Job_Opening__r.Hiring_Manager__c,
-                   Job_Application__r.Job_Opening__r.Hiring_Manager__r.FirstName,
-                   Job_Application__r.Job_Opening__r.Hiring_Manager__r.LastName,
-                   Job_Application__r.Job_Opening__r.Hiring_Manager__r.Email
+                   Job_Application__r.Job_Opening__r.Job_Title__c
             FROM Offer__c
             WHERE Offer_Status__c = 'Sent to Candidate'
             AND Offer_Expiry_Date__c < TODAY
@@ -165,13 +161,6 @@ public with sharing class CloseExpiredOffersBatch
             && !String.isBlank(offer.Recruiter__r.Email)) {
             return offer.Recruiter__r.Email;
         }
-
-        Contact hiringManager = getHiringManager(offer);
-        if (hiringManager != null
-            && !String.isBlank(hiringManager.Email)) {
-            return hiringManager.Email;
-        }
-
         return null;
     }
 
@@ -180,20 +169,7 @@ public with sharing class CloseExpiredOffersBatch
             && !String.isBlank(offer.Recruiter__r.Name)) {
             return offer.Recruiter__r.Name;
         }
-
-        String name = getContactName(getHiringManager(offer));
-        return String.isBlank(name) ? 'there' : name;
-    }
-
-    private static Contact getHiringManager(Offer__c offer) {
-        if (offer != null
-            && offer.Job_Application__r != null
-            && offer.Job_Application__r.Job_Opening__r != null) {
-            return offer.Job_Application__r
-                .Job_Opening__r
-                .Hiring_Manager__r;
-        }
-        return null;
+        return 'there';
     }
 
     private static Contact getCandidateContact(Offer__c offer) {
