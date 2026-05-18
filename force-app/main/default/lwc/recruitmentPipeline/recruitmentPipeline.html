@@ -66,6 +66,35 @@
                                         </div>
                                     </template>
 
+                                    <!-- Task Highlight -->
+                                    <template if:true={app.hasTask}>
+                                        <div class="task-row">
+                                            <span class={app.taskBadgeClass}>
+                                                {app.taskDueDateLabel}
+                                            </span>
+                                            <div class="task-meta">
+                                                <div class="task-subject"
+                                                     title={app.pendingTaskSubject}>
+                                                    {app.pendingTaskSubject}
+                                                </div>
+                                                <template if:true={app.pendingTaskPriority}>
+                                                    <div class="task-priority">
+                                                        Priority: {app.pendingTaskPriority}
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <lightning-button-icon
+                                                icon-name="utility:check"
+                                                variant="bare"
+                                                size="x-small"
+                                                alternative-text="Complete Task"
+                                                class="task-complete-button"
+                                                data-taskid={app.pendingTaskId}
+                                                onclick={handleCompleteTask}>
+                                            </lightning-button-icon>
+                                        </div>
+                                    </template>
+
                                     <!-- Footer -->
                                     <div class="card-footer">
                                         <!-- Days Badge -->
@@ -108,6 +137,7 @@
                                                     variant="bare"
                                                     size="x-small"
                                                     alternative-text="Move Back"
+                                                    class="icon-button"
                                                     data-id={app.Id}
                                                     data-direction="back"
                                                     onclick={handleMove}>
@@ -119,6 +149,7 @@
                                                     variant="bare"
                                                     size="x-small"
                                                     alternative-text="Move Forward"
+                                                    class="icon-button"
                                                     data-id={app.Id}
                                                     data-direction="forward"
                                                     onclick={handleMove}>
@@ -243,19 +274,22 @@
                             record-id={activeInterviewId}
                             object-api-name="Interview__c"
                             data-form="complete"
-                            onsubmit={handleCompleteSubmit}
-                            onsuccess={handleCompleteSuccess}>
+                            onsuccess={handleCompleteSuccess}
+                            onerror={handleCompleteError}>
                             <lightning-messages></lightning-messages>
 
                             <div class="slds-grid slds-wrap slds-gutters">
+                                <template if:true={showNeedsAnotherRound}>
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <lightning-input-field
+                                            field-name="Needs_Another_Round__c">
+                                        </lightning-input-field>
+                                    </div>
+                                </template>
                                 <div class="slds-col slds-size_1-of-1">
                                     <lightning-input-field
-                                        field-name="Needs_Another_Round__c">
-                                    </lightning-input-field>
-                                </div>
-                                <div class="slds-col slds-size_1-of-1">
-                                    <lightning-input-field
-                                        field-name="Recommendation__c">
+                                        field-name="Recommendation__c"
+                                        onchange={handleRecommendationChange}>
                                     </lightning-input-field>
                                 </div>
                                 <div class="slds-col slds-size_1-of-3">
@@ -279,21 +313,38 @@
                                     </lightning-input-field>
                                 </div>
                             </div>
-
-                            <div class="slds-modal__footer slds-grid slds-grid_align-end">
-                                <lightning-button
-                                    label="Cancel"
-                                    variant="neutral"
-                                    onclick={closeCompleteModal}>
-                                </lightning-button>
-                                <lightning-button
-                                    label="Submit"
-                                    variant="brand"
-                                    type="submit"
-                                    class="slds-m-left_small">
-                                </lightning-button>
-                            </div>
                         </lightning-record-edit-form>
+
+                        <template if:true={showRejectionReason}>
+                            <lightning-record-edit-form
+                                record-id={activeAppId}
+                                object-api-name="Job_Application__c"
+                                data-form="complete-app"
+                                onsuccess={handleAppUpdateSuccess}
+                                onerror={handleAppUpdateError}>
+                                <lightning-messages></lightning-messages>
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-1">
+                                        <lightning-input-field
+                                            field-name="Rejection_Reason__c">
+                                        </lightning-input-field>
+                                    </div>
+                                </div>
+                            </lightning-record-edit-form>
+                        </template>
+                    </div>
+                    <div class="slds-modal__footer slds-grid slds-grid_align-end">
+                        <lightning-button
+                            label="Cancel"
+                            variant="neutral"
+                            onclick={closeCompleteModal}>
+                        </lightning-button>
+                        <lightning-button
+                            label="Submit"
+                            variant="brand"
+                            onclick={handleCompleteClick}
+                            class="slds-m-left_small">
+                        </lightning-button>
                     </div>
                 </div>
             </section>

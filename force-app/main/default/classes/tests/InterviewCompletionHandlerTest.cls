@@ -6,7 +6,9 @@ private class InterviewCompletionHandlerTest {
         Account acc = new Account(
             Name = 'Test Corp',
             Account_Status__c = 'Active',
-            Primary_Industry_Sector__c = 'Information Technology'
+            Primary_Industry_Sector__c = 'Information Technology',
+            Phone = '415-555-0101',
+            Website = 'https://example.com'
         );
         insert acc;
 
@@ -77,12 +79,19 @@ private class InterviewCompletionHandlerTest {
         i.Feedback__c = 'Great candidate';
     }
 
+    private static void setRejectionReason(Id appId) {
+        update new Job_Application__c(
+            Id = appId,
+            Rejection_Reason__c = 'Overqualified'
+        );
+    }
+
     @IsTest
     static void test_strongHire_movesToOfferPending() {
         Interview__c i = getInterview();
         i.Feedback_Submitted__c = true;
         i.Needs_Another_Round__c = false;
-        i.Recommendation__c = 'Strong Hire';
+        i.Recommendation__c = 'Hire';
         applyFeedbackFields(i);
 
         Test.startTest();
@@ -92,7 +101,7 @@ private class InterviewCompletionHandlerTest {
         Job_Application__c app = getApp();
         System.Assert.areEqual('Offer Pending',
             app.Application_Stage__c,
-            'Strong Hire should move to Offer Pending');
+            'Hire should move to Offer Pending');
     }
 
     @IsTest
@@ -115,6 +124,7 @@ private class InterviewCompletionHandlerTest {
     @IsTest
     static void test_noHire_movesToRejected() {
         Interview__c i = getInterview();
+        setRejectionReason(i.Job_Application__c);
         i.Feedback_Submitted__c = true;
         i.Needs_Another_Round__c = false;
         i.Recommendation__c = 'No Hire';
@@ -132,9 +142,10 @@ private class InterviewCompletionHandlerTest {
     @IsTest
     static void test_strongNoHire_movesToRejected() {
         Interview__c i = getInterview();
+        setRejectionReason(i.Job_Application__c);
         i.Feedback_Submitted__c = true;
         i.Needs_Another_Round__c = false;
-        i.Recommendation__c = 'Strong No Hire';
+        i.Recommendation__c = 'No Hire';
         applyFeedbackFields(i);
 
         Test.startTest();
@@ -143,12 +154,13 @@ private class InterviewCompletionHandlerTest {
 
         System.Assert.areEqual('Rejected',
             getApp().Application_Stage__c,
-            'Strong No Hire should move to Rejected');
+            'No Hire should move to Rejected');
     }
 
     @IsTest
     static void test_nonPassRecommendation_movesToRejected() {
         Interview__c i = getInterview();
+        setRejectionReason(i.Job_Application__c);
         i.Feedback_Submitted__c = true;
         i.Needs_Another_Round__c = false;
         i.Recommendation__c = 'On the Fence';
@@ -274,7 +286,7 @@ private class InterviewCompletionHandlerTest {
 
         for (Interview__c i : interviews) {
             i.Feedback_Submitted__c = true;
-            i.Recommendation__c = 'Strong Hire';
+            i.Recommendation__c = 'Hire';
             applyFeedbackFields(i);
         }
 

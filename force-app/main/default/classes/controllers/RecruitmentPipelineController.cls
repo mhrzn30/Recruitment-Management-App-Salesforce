@@ -11,6 +11,11 @@ public with sharing class RecruitmentPipelineController {
         @AuraEnabled public String jobTitle;
         @AuraEnabled public String accountName;
         @AuraEnabled public String latestInterviewRound;
+        @AuraEnabled public Id pendingTaskId;
+        @AuraEnabled public String pendingTaskSubject;
+        @AuraEnabled public Date pendingTaskDueDate;
+        @AuraEnabled public String pendingTaskPriority;
+        @AuraEnabled public Boolean isTaskOverdue;
     }
 
     @AuraEnabled(cacheable=true)
@@ -58,6 +63,22 @@ public with sharing class RecruitmentPipelineController {
                 }
             }
 
+            Map<Id, Task> pendingTaskMap = new Map<Id, Task>();
+            if (!appIds.isEmpty()) {
+                for (Task t : [
+                    SELECT Id, Subject, ActivityDate, Priority, WhatId
+                    FROM Task
+                    WHERE WhatId IN :appIds
+                    AND Status != 'Completed'
+                    AND IsClosed = false
+                    ORDER BY ActivityDate ASC
+                ]) {
+                    if (!pendingTaskMap.containsKey(t.WhatId)) {
+                        pendingTaskMap.put(t.WhatId, t);
+                    }
+                }
+            }
+
             List<ApplicationCard> cards = new List<ApplicationCard>();
             for (Job_Application__c app : apps) {
                 ApplicationCard card = new ApplicationCard();
@@ -93,6 +114,23 @@ public with sharing class RecruitmentPipelineController {
                     ? latestInterview.Interview_Round__c
                     : null;
 
+                Task pendingTask = pendingTaskMap.get(app.Id);
+                if (pendingTask != null) {
+                    card.pendingTaskId = pendingTask.Id;
+                    card.pendingTaskSubject = pendingTask.Subject;
+                    card.pendingTaskDueDate = pendingTask.ActivityDate;
+                    card.pendingTaskPriority = pendingTask.Priority;
+                    card.isTaskOverdue =
+                        pendingTask.ActivityDate != null
+                        && pendingTask.ActivityDate < Date.today();
+                } else {
+                    card.pendingTaskId = null;
+                    card.pendingTaskSubject = null;
+                    card.pendingTaskDueDate = null;
+                    card.pendingTaskPriority = null;
+                    card.isTaskOverdue = false;
+                }
+
                 cards.add(card);
             }
 
@@ -110,6 +148,18 @@ public with sharing class RecruitmentPipelineController {
                 Application_Stage__c = newStage
             );
             update app;
+        } catch(Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static void completeTask(String taskId) {
+        try {
+            update new Task(
+                Id = taskId,
+                Status = 'Completed'
+            );
         } catch(Exception e) {
             throw new AuraHandledException(e.getMessage());
         }

@@ -6,7 +6,9 @@ private class CloseExpiredJobOpeningsBatchTest {
         Account acc = new Account(
             Name = 'Test Corp',
             Account_Status__c = 'Active',
-            Primary_Industry_Sector__c = 'Information Technology'
+            Primary_Industry_Sector__c = 'Information Technology',
+            Phone = '415-555-0101',
+            Website = 'https://example.com'
         );
         insert acc;
 
@@ -109,7 +111,7 @@ private class CloseExpiredJobOpeningsBatchTest {
         insert bulkOpenings;
 
         Test.startTest();
-        Database.executeBatch(new CloseExpiredJobOpeningsBatch(), 200);
+        Database.executeBatch(new CloseExpiredJobOpeningsBatch(), 201);
         Test.stopTest();
 
         Integer closedCount = [

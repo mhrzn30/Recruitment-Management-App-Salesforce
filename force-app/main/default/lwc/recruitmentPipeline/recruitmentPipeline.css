@@ -1,7 +1,7 @@
 /* Board */
 .board {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     overflow-x: auto;
     min-height: 500px;
     padding-bottom: 8px;
@@ -9,8 +9,8 @@
 
 /* Column */
 .column {
-    min-width: 190px;
-    max-width: 190px;
+    min-width: 270px;
+    max-width: 270px;
     background: #f8f9fa;
     border-radius: 8px;
     flex-shrink: 0;
@@ -79,7 +79,7 @@
     padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     min-height: 80px;
 }
 
@@ -87,10 +87,13 @@
 .card {
     background: white;
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .card:hover {
@@ -102,48 +105,121 @@
     font-size: 13px;
     font-weight: 600;
     color: #111827;
-    margin-bottom: 3px;
+    margin-bottom: 0;
+    line-height: 1.3;
 }
 
 .card-role {
     font-size: 12px;
     color: #3b82f6;
     font-weight: 500;
-    margin-bottom: 2px;
+    margin-bottom: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 .card-company {
     font-size: 11px;
     color: #6b7280;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 .card-round {
     font-size: 11px;
     color: #4b5563;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    line-height: 1.3;
+}
+
+.task-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #0ea5e9;
+    border-radius: 8px;
+    background: #f8fafc;
+    margin-bottom: 0;
+}
+
+.task-row:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.task-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.task-subject {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-priority {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 3px;
+}
+
+.task-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.task-pending {
+    color: #0f766e;
+    background: #ccfbf1;
+    border-color: #99f6e4;
+}
+
+.task-overdue {
+    color: #991b1b;
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.task-complete-button {
+    --slds-c-button-color-border: #e5e7eb;
+    --slds-c-icon-color-foreground-default: #0f766e;
+    --slds-c-icon-color-foreground-hover: #115e59;
+    --slds-c-button-radius-border: 999px;
+    --slds-c-button-color-background: #ffffff;
+    --slds-c-button-color-background-hover: #f3f4f6;
 }
 
 .card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 6px;
+    padding-top: 10px;
     border-top: 1px solid #f3f4f6;
 }
 
 .days-badge {
     display: inline-block;
     color: white;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 10px;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .badge-green {
@@ -170,6 +246,19 @@
     --slds-c-button-line-height: 1.2;
     --slds-c-button-spacing-inline-start: 6px;
     --slds-c-button-spacing-inline-end: 6px;
+    --slds-c-button-color-border: #d1d5db;
+    --slds-c-button-radius-border: 8px;
+    --slds-c-button-color-background: #ffffff;
+    --slds-c-button-color-background-hover: #f9fafb;
+}
+
+.icon-button {
+    --slds-c-button-color-border: #e5e7eb;
+    --slds-c-button-radius-border: 6px;
+    --slds-c-button-color-background: #ffffff;
+    --slds-c-button-color-background-hover: #f3f4f6;
+    --slds-c-button-spacing-inline-start: 4px;
+    --slds-c-button-spacing-inline-end: 4px;
 }
 
 /* Empty Column */

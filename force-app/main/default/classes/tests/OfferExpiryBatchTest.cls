@@ -9,6 +9,7 @@ private class OfferExpiryBatchTest {
             Website = 'https://example.com',
             Account_Status__c = 'Active',
             Primary_Industry_Sector__c = 'Information Technology'
+        
         );
         insert acc;
 
