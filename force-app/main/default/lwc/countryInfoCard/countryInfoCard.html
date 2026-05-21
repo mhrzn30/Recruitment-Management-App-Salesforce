@@ -1,0 +1,99 @@
+<template>
+    <lightning-card
+        title="Location Insights"
+        icon-name="standard:location">
+
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium
+                        slds-align_absolute-center">
+                <lightning-spinner
+                    alternative-text="Loading"
+                    size="small">
+                </lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+
+            <!-- Not found state -->
+            <template if:false={countryInfo.found}>
+                <div class="slds-p-around_medium">
+                    <p class="slds-text-color_weak">
+                        No location data available.
+                        Set a Location on this Job Opening
+                        to see country insights.
+                    </p>
+                </div>
+            </template>
+
+            <!-- Country info -->
+            <template if:true={countryInfo.found}>
+                <div class="slds-p-around_medium">
+
+                    <!-- Country name -->
+                    <div class="country-header">
+                        <span class="country-name">
+                            {countryInfo.name}
+                        </span>
+                        <span class="region-badge">
+                            {countryInfo.region}
+                        </span>
+                    </div>
+
+                    <!-- Info grid -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">
+                                Capital
+                            </span>
+                            <span class="info-value">
+                                {countryInfo.capital}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                Subregion
+                            </span>
+                            <span class="info-value">
+                                {countryInfo.subregion}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                Currency
+                            </span>
+                            <span class="info-value">
+                                {countryInfo.currencySymbol}
+                                {countryInfo.currencyName}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                Timezone
+                            </span>
+                            <span class="info-value">
+                                {countryInfo.timezone}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">
+                                Population
+                            </span>
+                            <span class="info-value">
+                                {formattedPopulation}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- API attribution -->
+                    <div class="api-attribution">
+                        <span>Powered by REST Countries API</span>
+                    </div>
+
+                </div>
+            </template>
+
+        </template>
+
+    </lightning-card>
+</template>
