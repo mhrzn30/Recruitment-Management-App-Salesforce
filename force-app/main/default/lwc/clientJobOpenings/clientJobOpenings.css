@@ -1,0 +1,104 @@
+.portal-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.portal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.portal-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.openings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.opening-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: box-shadow 0.15s;
+}
+
+.opening-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.opening-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.opening-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+}
+
+.status-open {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-closed {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.opening-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+.separator {
+    color: #9ca3af;
+}
+
+.opening-footer {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 10px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.error {
+    color: #dc2626;
+    padding: 12px;
+}

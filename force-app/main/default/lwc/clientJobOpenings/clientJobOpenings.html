@@ -1,0 +1,219 @@
+<template>
+    <div class="portal-container">
+
+        <div class="portal-header">
+            <h1>My Job Openings</h1>
+            <lightning-button
+                label="Post New Opening"
+                variant="brand"
+                icon-name="utility:add"
+                onclick={handleNewOpening}>
+            </lightning-button>
+        </div>
+
+        <template if:true={isLoading}>
+            <lightning-spinner
+                alternative-text="Loading"
+                size="medium">
+            </lightning-spinner>
+        </template>
+
+        <template if:true={error}>
+            <p class="error">{error}</p>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:true={hasOpenings}>
+                <div class="openings-grid">
+                    <template for:each={jobOpenings} for:item="jo">
+                        <div key={jo.Id} class="opening-card">
+                            <div class="opening-header">
+                                <span class="opening-title">
+                                    {jo.Job_Title__c}
+                                </span>
+                                <span class={jo.statusClass}>
+                                    {jo.Status__c}
+                                </span>
+                            </div>
+                            <div class="opening-meta">
+                                <span>{jo.Department__c}</span>
+                                <span class="separator">|</span>
+                                <span>{jo.Location__c}</span>
+                                <span class="separator">|</span>
+                                <span>{jo.Employment_Type__c}</span>
+                            </div>
+                            <div class="opening-footer">
+                                <span>
+                                    {jo.Openings_Count__c} opening(s)
+                                </span>
+                                <span>
+                                    {jo.Total_Applications__c} applied
+                                </span>
+                                <span>
+                                    Deadline: {jo.formattedDeadline}
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasOpenings}>
+                <div class="empty-state">
+                    <p>No job openings posted yet.</p>
+                    <lightning-button
+                        label="Post Your First Opening"
+                        variant="brand"
+                        onclick={handleNewOpening}>
+                    </lightning-button>
+                </div>
+            </template>
+        </template>
+
+        <template if:true={showModal}>
+            <section role="dialog"
+                     class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-modal__title">
+                            Post a New Job Opening
+                        </h2>
+                        <lightning-button-icon
+                            icon-name="utility:close"
+                            variant="bare-inverse"
+                            alternative-text="Close"
+                            class="slds-modal__close"
+                            onclick={closeModal}>
+                        </lightning-button-icon>
+                    </header>
+                    <div class="slds-modal__content
+                                slds-p-around_medium">
+
+                        <lightning-input
+                            label="Job Title"
+                            value={form.jobTitle}
+                            data-field="jobTitle"
+                            onchange={handleFormChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            label="Department"
+                            value={form.department}
+                            options={departmentOptions}
+                            data-field="department"
+                            onchange={handleFormChange}
+                            required>
+                        </lightning-combobox>
+
+                        <lightning-input
+                            label="Location"
+                            value={form.location}
+                            data-field="location"
+                            onchange={handleFormChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Is Remote"
+                            type="checkbox"
+                            checked={form.isRemote}
+                            data-field="isRemote"
+                            onchange={handleFormChange}>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            label="Employment Type"
+                            value={form.employmentType}
+                            options={employmentTypeOptions}
+                            data-field="employmentType"
+                            onchange={handleFormChange}
+                            required>
+                        </lightning-combobox>
+
+                        <lightning-input
+                            label="Number of Openings"
+                            type="number"
+                            value={form.openingsCount}
+                            data-field="openingsCount"
+                            onchange={handleFormChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Application Deadline"
+                            type="date"
+                            value={form.deadline}
+                            data-field="deadline"
+                            onchange={handleFormChange}
+                            required>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Min Salary"
+                            type="number"
+                            value={form.minSalary}
+                            data-field="minSalary"
+                            onchange={handleFormChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Max Salary"
+                            type="number"
+                            value={form.maxSalary}
+                            data-field="maxSalary"
+                            onchange={handleFormChange}>
+                        </lightning-input>
+
+                        <lightning-input
+                            label="Required Experience (Years)"
+                            type="number"
+                            value={form.requiredExperienceYears}
+                            data-field="requiredExperienceYears"
+                            onchange={handleFormChange}>
+                        </lightning-input>
+
+                        <lightning-combobox
+                            label="Recruiter"
+                            placeholder="Select recruiter"
+                            value={form.recruiterId}
+                            options={recruiterOptions}
+                            data-field="recruiterId"
+                            onchange={handleFormChange}>
+                        </lightning-combobox>
+
+                        <lightning-textarea
+                            label="Required Skills"
+                            value={form.requiredSkills}
+                            data-field="requiredSkills"
+                            onchange={handleFormChange}>
+                        </lightning-textarea>
+
+                        <lightning-textarea
+                            label="Job Description"
+                            value={form.jobDescription}
+                            data-field="jobDescription"
+                            onchange={handleFormChange}>
+                        </lightning-textarea>
+
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button
+                            label="Cancel"
+                            onclick={closeModal}>
+                        </lightning-button>
+                        <lightning-button
+                            label="Post Opening"
+                            variant="brand"
+                            disabled={isSubmitting}
+                            onclick={handleSubmit}
+                            class="slds-m-left_small">
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open">
+            </div>
+        </template>
+
+    </div>
+</template>

@@ -16,6 +16,9 @@ public with sharing class RecruitmentPipelineController {
         @AuraEnabled public Date pendingTaskDueDate;
         @AuraEnabled public String pendingTaskPriority;
         @AuraEnabled public Boolean isTaskOverdue;
+        @AuraEnabled public Id offerId;
+        @AuraEnabled public String offerStatus;
+        @AuraEnabled public Boolean offerLetterSent;
     }
 
     @AuraEnabled(cacheable=true)
@@ -79,6 +82,23 @@ public with sharing class RecruitmentPipelineController {
                 }
             }
 
+            Map<Id, Offer__c> latestOfferByApp = new Map<Id, Offer__c>();
+            if (!appIds.isEmpty()) {
+                for (Offer__c offer : [
+                    SELECT Id, Job_Application__c,
+                           Offer_Status__c, Offer_Letter_Sent__c
+                    FROM Offer__c
+                    WHERE Job_Application__c IN :appIds
+                    ORDER BY CreatedDate DESC
+                ]) {
+                    if (!latestOfferByApp.containsKey(
+                        offer.Job_Application__c)) {
+                        latestOfferByApp.put(
+                            offer.Job_Application__c, offer);
+                    }
+                }
+            }
+
             List<ApplicationCard> cards = new List<ApplicationCard>();
             for (Job_Application__c app : apps) {
                 ApplicationCard card = new ApplicationCard();
@@ -131,6 +151,18 @@ public with sharing class RecruitmentPipelineController {
                     card.isTaskOverdue = false;
                 }
 
+                Offer__c latestOffer = latestOfferByApp.get(app.Id);
+                if (latestOffer != null) {
+                    card.offerId = latestOffer.Id;
+                    card.offerStatus = latestOffer.Offer_Status__c;
+                    card.offerLetterSent =
+                        latestOffer.Offer_Letter_Sent__c;
+                } else {
+                    card.offerId = null;
+                    card.offerStatus = null;
+                    card.offerLetterSent = false;
+                }
+
                 cards.add(card);
             }
 
@@ -165,6 +197,190 @@ public with sharing class RecruitmentPipelineController {
         }
     }
 
+    @AuraEnabled
+    public static Id draftOffer(String appId) {
+        try {
+            if (String.isBlank(appId)) {
+                throw new AuraHandledException('Application Id required.');
+            }
+
+            List<Offer__c> existingOffers = [
+                SELECT Id, Offer_Status__c, Offer_Letter_Sent__c
+                FROM Offer__c
+                WHERE Job_Application__c = :appId
+                ORDER BY CreatedDate DESC
+                LIMIT 1
+            ];
+
+            if (!existingOffers.isEmpty()) {
+                Offer__c existing = existingOffers[0];
+                if (existing.Offer_Letter_Sent__c == true) {
+                    throw new AuraHandledException(
+                        'Offer already extended.'
+                    );
+                }
+                if (existing.Offer_Status__c != 'Expired') {
+                    return existing.Id;
+                }
+            }
+
+            Job_Application__c app = [
+                SELECT Id,
+                       Expected_Salary__c,
+                       Contact__c,
+                       Candidate__c,
+                       Job_Opening__r.Job_Title__c,
+                       Job_Opening__r.Employment_Type__c,
+                       Job_Opening__r.Min_Salary__c,
+                       Job_Opening__r.Max_Salary__c,
+                       Job_Opening__r.Recruiter__c
+                FROM Job_Application__c
+                WHERE Id = :appId
+                LIMIT 1
+            ];
+
+            Decimal offeredSalary = resolveOfferedSalary(app);
+            String employmentType = resolveEmploymentType(app);
+            String designation = !String.isBlank(
+                app.Job_Opening__r != null
+                ? app.Job_Opening__r.Job_Title__c
+                : null
+            ) ? app.Job_Opening__r.Job_Title__c : 'Offer';
+
+            String draftStatus = resolveDraftStatus();
+            if (String.isBlank(draftStatus)) {
+                throw new AuraHandledException(
+                    'No valid offer status available.'
+                );
+            }
+
+            Offer__c offer = new Offer__c(
+                Job_Application__c = app.Id,
+                Offer_Status__c = draftStatus,
+                Offer_Letter_Sent__c = false,
+                Offered_Salary__c = offeredSalary,
+                Offer_Date__c = Date.today(),
+                Offer_Expiry_Date__c = Date.today().addDays(7),
+                Employment_Type__c = employmentType,
+                Offered_Designation__c = designation,
+                Candidate__c = app.Candidate__c != null
+                    ? app.Candidate__c
+                    : app.Contact__c,
+                Recruiter__c = app.Job_Opening__r != null
+                    ? app.Job_Opening__r.Recruiter__c
+                    : null
+            );
+            insert offer;
+            return offer.Id;
+        } catch(Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
+    @AuraEnabled
+    public static void extendOffer(String appId) {
+        try {
+            if (String.isBlank(appId)) {
+                throw new AuraHandledException('Application Id required.');
+            }
+
+            List<Offer__c> offers = [
+                SELECT Id,
+                       Offer_Status__c,
+                       Offer_Letter_Sent__c,
+                       Offer_Date__c,
+                       Offer_Expiry_Date__c,
+                       Candidate__c,
+                       Candidate__r.FirstName,
+                       Candidate__r.LastName,
+                       Candidate__r.Email,
+                       Job_Application__c,
+                       Job_Application__r.Contact__c,
+                       Job_Application__r.Contact__r.FirstName,
+                       Job_Application__r.Contact__r.LastName,
+                       Job_Application__r.Contact__r.Email,
+                       Job_Application__r.Candidate__c,
+                       Job_Application__r.Candidate__r.FirstName,
+                       Job_Application__r.Candidate__r.LastName,
+                       Job_Application__r.Candidate__r.Email,
+                       Job_Application__r.Job_Opening__r.Job_Title__c
+                FROM Offer__c
+                WHERE Job_Application__c = :appId
+                ORDER BY CreatedDate DESC
+                LIMIT 1
+            ];
+
+            if (offers.isEmpty()) {
+                throw new AuraHandledException(
+                    'Draft an offer before extending.'
+                );
+            }
+
+            Offer__c offer = offers[0];
+            if (offer.Offer_Letter_Sent__c == true) {
+                throw new AuraHandledException(
+                    'Offer already extended.'
+                );
+            }
+
+            Contact candidate = getCandidateContact(offer);
+            if (candidate == null || String.isBlank(candidate.Email)) {
+                throw new AuraHandledException(
+                    'Candidate email not available.'
+                );
+            }
+
+            Date expiryDate = offer.Offer_Expiry_Date__c != null
+                ? offer.Offer_Expiry_Date__c
+                : Date.today().addDays(7);
+            Date offerDate = offer.Offer_Date__c != null
+                ? offer.Offer_Date__c
+                : Date.today();
+
+            String candidateName = getContactName(candidate);
+            if (String.isBlank(candidateName)) {
+                candidateName = 'there';
+            }
+
+            String jobTitle = getJobTitle(offer);
+
+            Messaging.SingleEmailMessage msg =
+                new Messaging.SingleEmailMessage();
+            msg.setToAddresses(new List<String>{ candidate.Email });
+            msg.setSubject('Offer for ' + jobTitle);
+            msg.setPlainTextBody(
+                'Hi ' + candidateName + ',\n\n' +
+                'We are pleased to extend an offer for ' + jobTitle + '.\n' +
+                'Please respond before ' + String.valueOf(expiryDate) + '.\n\n' +
+                'Recruitment Team'
+            );
+
+            Messaging.SendEmailResult[] results =
+                Messaging.sendEmail(
+                    new List<Messaging.SingleEmailMessage>{ msg },
+                    false
+                );
+            if (results.isEmpty() || !results[0].isSuccess()) {
+                throw new AuraHandledException(
+                    'Unable to send offer email.'
+                );
+            }
+
+            offer.Offer_Status__c = 'Sent to Candidate';
+            offer.Offer_Letter_Sent__c = true;
+            offer.Offer_Date__c = offerDate;
+            offer.Offer_Expiry_Date__c = expiryDate;
+            update offer;
+
+            update new Job_Application__c(
+                Id = appId,
+                Application_Stage__c = 'Offer Extended'
+            );
+        } catch(Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+
     @AuraEnabled(cacheable=false)
     public static Id getLatestInterview(String appId) {
         try {
@@ -180,5 +396,104 @@ public with sharing class RecruitmentPipelineController {
         } catch(Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
+    }
+
+    private static Decimal resolveOfferedSalary(Job_Application__c app) {
+        if (app == null) return null;
+
+        if (app.Expected_Salary__c != null) {
+            return app.Expected_Salary__c;
+        }
+
+        if (app.Job_Opening__r != null) {
+            if (app.Job_Opening__r.Max_Salary__c != null) {
+                return app.Job_Opening__r.Max_Salary__c;
+            }
+            if (app.Job_Opening__r.Min_Salary__c != null) {
+                return app.Job_Opening__r.Min_Salary__c;
+            }
+        }
+
+        throw new AuraHandledException(
+            'Set expected salary or job salary range before drafting.'
+        );
+    }
+
+    private static String resolveEmploymentType(Job_Application__c app) {
+        if (app != null
+            && app.Job_Opening__r != null
+            && !String.isBlank(app.Job_Opening__r.Employment_Type__c)) {
+            return app.Job_Opening__r.Employment_Type__c;
+        }
+        return 'Full-Time';
+    }
+
+    private static String resolveDraftStatus() {
+        List<Schema.PicklistEntry> values =
+            Offer__c.Offer_Status__c.getDescribe().getPicklistValues();
+        Set<String> available = new Set<String>();
+        for (Schema.PicklistEntry entry : values) {
+            available.add(entry.getValue());
+        }
+
+        List<String> preferred = new List<String>{
+            'Draft',
+            'Pending',
+            'Created'
+        };
+        for (String candidate : preferred) {
+            if (available.contains(candidate)) {
+                return candidate;
+            }
+        }
+
+        if (available.contains('Sent to Candidate')) {
+            return 'Sent to Candidate';
+        }
+
+        return values.isEmpty() ? null : values[0].getValue();
+    }
+
+    private static Contact getCandidateContact(Offer__c offer) {
+        if (offer == null) return null;
+
+        if (offer.Candidate__r != null) {
+            return offer.Candidate__r;
+        }
+
+        if (offer.Job_Application__r != null) {
+            if (offer.Job_Application__r.Contact__r != null) {
+                return offer.Job_Application__r.Contact__r;
+            }
+            if (offer.Job_Application__r.Candidate__r != null) {
+                return offer.Job_Application__r.Candidate__r;
+            }
+        }
+
+        return null;
+    }
+
+    private static String getContactName(Contact contact) {
+        if (contact == null) return null;
+        if (!String.isBlank(contact.FirstName)) {
+            return contact.FirstName;
+        }
+        if (!String.isBlank(contact.LastName)) {
+            return contact.LastName;
+        }
+        return null;
+    }
+
+    private static String getJobTitle(Offer__c offer) {
+        if (offer != null
+            && offer.Job_Application__r != null
+            && offer.Job_Application__r.Job_Opening__r != null
+            && !String.isBlank(
+                offer.Job_Application__r.Job_Opening__r.Job_Title__c
+            )) {
+            return offer.Job_Application__r.Job_Opening__r.Job_Title__c;
+        }
+
+        return 'the role';
     }
 }
